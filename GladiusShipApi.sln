@@ -1,0 +1,49 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35327.3
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GladiusShip.Api", "GladiusShipApi\GladiusShip.Api.csproj", "{0211D2F3-750A-442B-8282-C905D9E6537F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GladiusShip.App", "GladiusShipApp\GladiusShip.App.csproj", "{75B859F8-7212-4575-8A93-B5591D9CFBF0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GladiusShip.Core", "GladiusShip.Core\GladiusShip.Core.csproj", "{51078FDF-76D2-4EB3-A32D-6BCBD5DF78CE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GladiusShip.Infrastructure", "GladiusShip.Infrastructure\GladiusShip.Infrastructure.csproj", "{CBD1710D-33B4-4309-A5AE-C061247A6373}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GladiusShip.Report", "GladiusShip.Report\GladiusShip.Report.csproj", "{D6C4E0CB-4046-42B6-9A5D-95F828A7FF69}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0211D2F3-750A-442B-8282-C905D9E6537F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0211D2F3-750A-442B-8282-C905D9E6537F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0211D2F3-750A-442B-8282-C905D9E6537F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0211D2F3-750A-442B-8282-C905D9E6537F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{75B859F8-7212-4575-8A93-B5591D9CFBF0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{75B859F8-7212-4575-8A93-B5591D9CFBF0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{75B859F8-7212-4575-8A93-B5591D9CFBF0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{75B859F8-7212-4575-8A93-B5591D9CFBF0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{51078FDF-76D2-4EB3-A32D-6BCBD5DF78CE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{51078FDF-76D2-4EB3-A32D-6BCBD5DF78CE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{51078FDF-76D2-4EB3-A32D-6BCBD5DF78CE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{51078FDF-76D2-4EB3-A32D-6BCBD5DF78CE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CBD1710D-33B4-4309-A5AE-C061247A6373}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CBD1710D-33B4-4309-A5AE-C061247A6373}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CBD1710D-33B4-4309-A5AE-C061247A6373}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CBD1710D-33B4-4309-A5AE-C061247A6373}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D6C4E0CB-4046-42B6-9A5D-95F828A7FF69}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D6C4E0CB-4046-42B6-9A5D-95F828A7FF69}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D6C4E0CB-4046-42B6-9A5D-95F828A7FF69}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D6C4E0CB-4046-42B6-9A5D-95F828A7FF69}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B44925F1-E125-499D-AA00-A715BB9EAEB3}
+	EndGlobalSection
+EndGlobal
