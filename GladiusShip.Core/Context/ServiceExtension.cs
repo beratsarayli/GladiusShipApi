@@ -1,4 +1,5 @@
 using GladiusShip.Core.Service.Auth;
+using GladiusShip.Core.Service.Ship;
 using GladiusShip.Core.Service.User;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Configuration;
@@ -13,6 +14,7 @@ public static class ServiceExtension
     public static IServiceCollection AddCoreServices(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IShipService, ShipService>();
         services.AddScoped<IUserService, UserService>();
 
         return services;

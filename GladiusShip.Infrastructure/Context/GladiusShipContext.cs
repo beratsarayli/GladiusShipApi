@@ -22,6 +22,16 @@ public partial class GladiusShipContext : DbContext
 
     public virtual DbSet<RoleDetail> RoleDetails { get; set; }
 
+    public virtual DbSet<Ship> Ship { get; set; }
+
+    public virtual DbSet<ShipDocument> ShipDocument { get; set; }
+
+    public virtual DbSet<ShipMachine> ShipMachine { get; set; }
+
+    public virtual DbSet<ShipPhoto> ShipPhoto { get; set; }
+
+    public virtual DbSet<ShipRegistration> ShipRegistration { get; set; }
+
     public virtual DbSet<User> Users { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
