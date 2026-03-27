@@ -1,7 +1,6 @@
 using GladiusShip.Core.Service.Storage;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Http;
 using System.IO;
 
 namespace GladiusShip.App.Controllers;
@@ -19,7 +18,9 @@ public class StorageController : ControllerBase
     }
 
     [HttpGet("list")]
-    public async Task<ActionResult<IReadOnlyList<string>>> List([FromQuery] string? prefix, CancellationToken cancellationToken)
+    public async Task<ActionResult<IReadOnlyList<string>>> List(
+        [FromQuery] string? prefix,
+        CancellationToken cancellationToken)
     {
         var keys = await _storage.ListKeysAsync(prefix, cancellationToken);
         return Ok(keys);
@@ -30,25 +31,31 @@ public class StorageController : ControllerBase
     {
         var stream = await _storage.GetObjectAsync(key, cancellationToken);
         if (stream == null) return NotFound();
+
+        // Gerekirse MIME tespiti yapýlabilir; þimdilik generic
         return File(stream, "application/octet-stream", enableRangeProcessing: true);
     }
 
     [HttpPost("upload")]
-    public async Task<IActionResult> Upload(CancellationToken cancellationToken)
+    [RequestSizeLimit(50_000_000)] // 50MB
+    [Consumes("multipart/form-data")]
+    public async Task<IActionResult> Upload([FromForm] IFormFile? file, [FromForm] string? prefix, CancellationToken cancellationToken)
     {
-        var file = Request.Form.Files.FirstOrDefault();
         if (file == null || file.Length == 0)
-            return BadRequest(new { Success = false, Message = "Dosya bulunamadý." });
+            return BadRequest(new { Success = false, Message = "Dosya bulunamadi." });
 
-        var prefix = Request.Form["prefix"].ToString();
         var ext = Path.GetExtension(file.FileName);
         var safeExt = string.IsNullOrWhiteSpace(ext) ? ".bin" : ext.ToLowerInvariant();
         var normalizedPrefix = string.IsNullOrWhiteSpace(prefix) ? "uploads" : prefix.Trim().Trim('/');
         var key = $"{normalizedPrefix}/{Guid.NewGuid()}{safeExt}";
 
-        await using var stream = file.OpenReadStream();
-        await _storage.PutObjectAsync(key, stream, file.ContentType, cancellationToken);
+        var contentType = string.IsNullOrWhiteSpace(file.ContentType)
+            ? "application/octet-stream"
+            : file.ContentType;
 
-        return Ok(new { Success = true, Message = "Dosya yüklendi.", Key = key });
+        await using var stream = file.OpenReadStream();
+        await _storage.PutObjectAsync(key, stream, contentType, cancellationToken);
+
+        return Ok(new { Success = true, Message = "Dosya yuklendi.", Key = key });
     }
 }
