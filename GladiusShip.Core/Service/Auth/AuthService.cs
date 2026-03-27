@@ -36,15 +36,34 @@ public class AuthService : IAuthService
         {
             var user = await _db.Users
                 .AsNoTracking()
-                .FirstOrDefaultAsync(x => x.Mail == request.Mail);
+                .FirstOrDefaultAsync(x => x.Mail == request.Mail && x.IsPassive != 1);
 
             if (user == null)
-                return new AuthResponseModel { Success = false, Message = "Kullanıcı bulunamadı." };
+                return new AuthResponseModel { Success = false, Message = "Kullanıcı bulunamadı veya hesap pasif." };
+
+            if (!VerifyPassword(request.Password, user.Password))
+                return new AuthResponseModel { Success = false, Message = "Şifre hatalı." };
+
+            var isSuperAdmin = user.IsPassive == 2;
+
+            var token = GenerateToken(new UserClaimModel
+            {
+                Ref = user.Ref,
+                RoleRef = user.RoleRef,
+                Mail = user.Mail,
+                FullName = $"{user.Name} {user.Surname}",
+                IsSuperAdmin = isSuperAdmin
+            });
 
             return new AuthResponseModel
             {
-                Success = false,
-                Message = $"IsPassive: {user.IsPassive} | StoredPassword: {user.Password} | InputPassword: {request.Password} | StartsWithDollar2: {user.Password?.StartsWith("$2")}"
+                Success = true,
+                IsSuperAdmin = isSuperAdmin,
+                Token = new TokenModel
+                {
+                    AccessToken = token,
+                    ExpiresAt = DateTime.UtcNow.AddHours(8)
+                }
             };
         }
         catch (Exception ex)
