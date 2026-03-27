@@ -120,90 +120,122 @@ public class ShipService : IShipService
 
     public async Task<ShipResultModel> CreateAsync(Guid customerRef, ShipCreateModel model, CancellationToken cancellationToken = default)
     {
-        if (model.Photos == null || model.Photos.Count < 4)
-            return new ShipResultModel { Success = false, Message = "En az 4 fotoğraf eklenmelidir." };
-
-        var imoExists = await _db.Ship.AnyAsync(x => x.ImoNumber == model.ImoNumber, cancellationToken);
-        if (imoExists)
-            return new ShipResultModel { Success = false, Message = "Bu IMO numarası zaten kayıtlı." };
-
-        var shipRef = Guid.NewGuid();
-
-        await _db.Ship.AddAsync(new Infrastructure.Entity.Ship
+        try
         {
-            Ref = shipRef,
-            CustomerRef = customerRef,
-            CompanyRef = model.CompanyRef,
-            Name = model.Name,
-            HullId = model.HullId,
-            ImoNumber = model.ImoNumber,
-            Flag = model.Flag,
-            RegistrationType = model.RegistrationType,
-            IsPassive = 0
-        }, cancellationToken);
+            if (model.Photos == null || model.Photos.Count < 4)
+                return new ShipResultModel { Success = false, Message = "En az 4 fotoğraf eklenmelidir." };
 
-        if (model.Document != null)
-        {
-            await _db.ShipDocument.AddAsync(new ShipDocument
+            var imoExists = await _db.Ship.AnyAsync(x => x.ImoNumber == model.ImoNumber, cancellationToken);
+            if (imoExists)
+                return new ShipResultModel { Success = false, Message = "Bu IMO numarası zaten kayıtlı." };
+
+            var shipRef = Guid.NewGuid();
+
+            await _db.Ship.AddAsync(new Infrastructure.Entity.Ship
             {
-                Ref = Guid.NewGuid(),
-                ShipRef = shipRef,
-                PermitValidity = model.Document.PermitValidity,
-                İnsuranceExpire = model.Document.InsuranceExpire,
-                RadioCallSign = model.Document.RadioCallSign,
-                MMSINumber = model.Document.MMSINumber,
-                CEDocumentNumber = model.Document.CEDocumentNumber
+                Ref = shipRef,
+                CustomerRef = customerRef,
+                CompanyRef = model.CompanyRef,
+                Name = model.Name,
+                HullId = model.HullId,
+                ImoNumber = model.ImoNumber,
+                Flag = model.Flag,
+                RegistrationType = model.RegistrationType,
+                IsPassive = 0
             }, cancellationToken);
-        }
 
-        if (model.Machine != null)
-        {
-            await _db.ShipMachine.AddAsync(new ShipMachine
+            if (model.Document != null)
             {
-                Ref = Guid.NewGuid(),
-                ShipRef = shipRef,
-                MachineBrand = model.Machine.MachineBrand,
-                MachineModel = model.Machine.MachineModel,
-                MachineSerial = model.Machine.MachineSerial,
-                Power = model.Machine.Power,
-                EngineClock = model.Machine.EngineClock
-            }, cancellationToken);
-        }
+                await _db.ShipDocument.AddAsync(new ShipDocument
+                {
+                    Ref = Guid.NewGuid(),
+                    ShipRef = shipRef,
+                    PermitValidity = model.Document.PermitValidity,
+                    İnsuranceExpire = model.Document.InsuranceExpire,
+                    RadioCallSign = model.Document.RadioCallSign,
+                    MMSINumber = model.Document.MMSINumber,
+                    CEDocumentNumber = model.Document.CEDocumentNumber
+                }, cancellationToken);
+            }
 
-        if (model.Registration != null)
-        {
-            await _db.ShipRegistration.AddAsync(new ShipRegistration
+            if (model.Machine != null)
             {
-                Ref = Guid.NewGuid(),
-                ShipRef = shipRef,
-                PortRef = model.Registration.PortRef,
-                RegistrationNumber = model.Registration.RegistrationNumber,
-                RegistrationSize = model.Registration.RegistrationSize,
-                RegistrationWidth = model.Registration.RegistrationWidth,
-                GrossTonilato = model.Registration.GrossTonilato,
-                ShipCreateDate = model.Registration.ShipCreateDate
-            }, cancellationToken);
-        }
+                await _db.ShipMachine.AddAsync(new ShipMachine
+                {
+                    Ref = Guid.NewGuid(),
+                    ShipRef = shipRef,
+                    MachineBrand = model.Machine.MachineBrand,
+                    MachineModel = model.Machine.MachineModel,
+                    MachineSerial = model.Machine.MachineSerial,
+                    Power = model.Machine.Power,
+                    EngineClock = model.Machine.EngineClock
+                }, cancellationToken);
+            }
 
-        foreach (var photo in model.Photos)
-        {
-            var (bytes, ext, contentType) = DecodePhoto(photo.Photo);
-            var photoRef = Guid.NewGuid();
-            var key = $"ships/{shipRef}/{photoRef}.{ext}";
-            using var stream = new MemoryStream(bytes);
-            await _storage.PutObjectAsync(key, stream, contentType, cancellationToken);
-            await _db.ShipPhoto.AddAsync(new ShipPhoto
+            if (model.Registration != null)
             {
-                Ref = photoRef,
-                ShipRef = shipRef,
-                Photo = key,
-                SerialNumber = photo.SerialNumber
-            }, cancellationToken);
+                await _db.ShipRegistration.AddAsync(new ShipRegistration
+                {
+                    Ref = Guid.NewGuid(),
+                    ShipRef = shipRef,
+                    PortRef = model.Registration.PortRef,
+                    RegistrationNumber = model.Registration.RegistrationNumber,
+                    RegistrationSize = model.Registration.RegistrationSize,
+                    RegistrationWidth = model.Registration.RegistrationWidth,
+                    GrossTonilato = model.Registration.GrossTonilato,
+                    ShipCreateDate = model.Registration.ShipCreateDate
+                }, cancellationToken);
+            }
+
+            foreach (var photo in model.Photos)
+            {
+                if (string.IsNullOrWhiteSpace(photo.Photo))
+                    continue;
+
+                var photoRef = Guid.NewGuid();
+                string key;
+
+                // Frontend iki türlü gelebilir:
+                // 1) data:image/...;base64,...  -> decode edip storage'a yükle
+                // 2) ships/.../xxx.jpg          -> zaten storage key, direkt kullan
+                if (photo.Photo.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+                {
+                    var (bytes, ext, contentType) = DecodePhoto(photo.Photo);
+                    key = $"ships/{shipRef}/{photoRef}.{ext}";
+                    using var stream = new MemoryStream(bytes);
+                    await _storage.PutObjectAsync(key, stream, contentType, cancellationToken);
+                }
+                else
+                {
+                    key = photo.Photo.Trim();
+                }
+
+                await _db.ShipPhoto.AddAsync(new ShipPhoto
+                {
+                    Ref = photoRef,
+                    ShipRef = shipRef,
+                    Photo = key,
+                    SerialNumber = photo.SerialNumber
+                }, cancellationToken);
+            }
+
+            await _db.SaveChangesAsync(cancellationToken);
+
+            return new ShipResultModel
+            {
+                Success = true,
+                Message = "Gemi oluşturuldu.",
+                ShipRef = shipRef
+            };
         }
-
-        await _db.SaveChangesAsync(cancellationToken);
-
-        return new ShipResultModel { Success = true, Message = "Gemi oluşturuldu.", ShipRef = shipRef };
+        catch (Exception ex)
+        {
+            return new ShipResultModel
+            {
+                Success = false,
+                Message = $"Create hata: {ex.Message}"
+            };
+        }
     }
 
     public async Task<ShipResultModel> UpdateAsync(Guid shipRef, Guid customerRef, ShipUpdateModel model, CancellationToken cancellationToken = default)
