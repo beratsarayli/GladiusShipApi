@@ -4,6 +4,7 @@ using GladiusShip.Infrastructure.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GladiusShip.Infrastructure.Migrations
 {
     [DbContext(typeof(GladiusShipContext))]
-    partial class GladiusShipContextModelSnapshot : ModelSnapshot
+    [Migration("20260326073348_ShipPermission")]
+    partial class ShipPermission
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,34 +24,6 @@ namespace GladiusShip.Infrastructure.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("GladiusShip.Infrastructure.Entity.Expertise", b =>
-                {
-                    b.Property<Guid>("Ref")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreateDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("FilePath")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("ShipRef")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("Value")
-                        .HasColumnType("int");
-
-                    b.HasKey("Ref");
-
-                    b.ToTable("Expertise");
-                });
 
             modelBuilder.Entity("GladiusShip.Infrastructure.Entity.Insurance", b =>
                 {
@@ -91,60 +66,9 @@ namespace GladiusShip.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<DateTime>("CreateDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("FilePath")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("ShipRef")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("Value")
-                        .HasColumnType("int");
-
                     b.HasKey("Ref");
 
                     b.ToTable("InsuranceDetails");
-                });
-
-            modelBuilder.Entity("GladiusShip.Infrastructure.Entity.InsuranceDiscount", b =>
-                {
-                    b.Property<Guid>("Ref")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreateDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("FilePath")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("InsuranceRef")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("IsPassive")
-                        .HasColumnType("int");
-
-                    b.Property<Guid>("ShipRef")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("Value")
-                        .HasColumnType("int");
-
-                    b.HasKey("Ref");
-
-                    b.ToTable("InsuranceDiscount");
                 });
 
             modelBuilder.Entity("GladiusShip.Infrastructure.Entity.Log", b =>
@@ -199,40 +123,6 @@ namespace GladiusShip.Infrastructure.Migrations
                     b.ToTable("Maintenance");
                 });
 
-            modelBuilder.Entity("GladiusShip.Infrastructure.Entity.MaintenanceCostDocument", b =>
-                {
-                    b.Property<Guid>("Ref")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreateDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("FilePath")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("IsPassive")
-                        .HasColumnType("int");
-
-                    b.Property<Guid>("MaintenanceRef")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("ShipRef")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("Value")
-                        .HasColumnType("int");
-
-                    b.HasKey("Ref");
-
-                    b.ToTable("MaintenanceCostDocument");
-                });
-
             modelBuilder.Entity("GladiusShip.Infrastructure.Entity.MaintenanceDetails", b =>
                 {
                     b.Property<Guid>("Ref")
@@ -259,187 +149,6 @@ namespace GladiusShip.Infrastructure.Migrations
                     b.HasKey("Ref");
 
                     b.ToTable("MaintenanceDetails");
-                });
-
-            modelBuilder.Entity("GladiusShip.Infrastructure.Entity.MaintenanceJob", b =>
-                {
-                    b.Property<Guid>("Ref")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreateDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("FormType")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("IsPassive")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("JobDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Location")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid?>("PersonalRef")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("ResponsiblePersonal")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("ShipRef")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
-
-                    b.HasKey("Ref");
-
-                    b.ToTable("MaintenanceJob");
-                });
-
-            modelBuilder.Entity("GladiusShip.Infrastructure.Entity.MaintenanceJobAction", b =>
-                {
-                    b.Property<Guid>("Ref")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("JobRef")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("MasterComment")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("NextActionDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int?>("NextActionHour")
-                        .HasColumnType("int");
-
-                    b.HasKey("Ref");
-
-                    b.ToTable("MaintenanceJobAction");
-                });
-
-            modelBuilder.Entity("GladiusShip.Infrastructure.Entity.MaintenanceJobCost", b =>
-                {
-                    b.Property<Guid>("Ref")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Currency")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("InvoiceFile")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("JobRef")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<decimal>("LaborCost")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal>("PartCost")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.HasKey("Ref");
-
-                    b.ToTable("MaintenanceJobCost");
-                });
-
-            modelBuilder.Entity("GladiusShip.Infrastructure.Entity.MaintenanceJobItem", b =>
-                {
-                    b.Property<Guid>("Ref")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("IsPassive")
-                        .HasColumnType("int");
-
-                    b.Property<Guid>("JobRef")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Material")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("SerialNumber")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("WarrantyFile")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("WorkItem")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Ref");
-
-                    b.ToTable("MaintenanceJobItem");
-                });
-
-            modelBuilder.Entity("GladiusShip.Infrastructure.Entity.MaintenanceJobPhoto", b =>
-                {
-                    b.Property<Guid>("Ref")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Category")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("CreateDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid>("JobRef")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("PhotoPath")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Ref");
-
-                    b.ToTable("MaintenanceJobPhoto");
-                });
-
-            modelBuilder.Entity("GladiusShip.Infrastructure.Entity.MaintenanceJobRisk", b =>
-                {
-                    b.Property<Guid>("Ref")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int?>("EngineHourAfter")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("EngineHourBefore")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("HasWaste")
-                        .HasColumnType("bit");
-
-                    b.Property<Guid>("JobRef")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("OperationType")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("WasteDetail")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Ref");
-
-                    b.ToTable("MaintenanceJobRisk");
                 });
 
             modelBuilder.Entity("GladiusShip.Infrastructure.Entity.Marina", b =>

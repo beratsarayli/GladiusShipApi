@@ -4,6 +4,7 @@ using GladiusShip.Infrastructure.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GladiusShip.Infrastructure.Migrations
 {
     [DbContext(typeof(GladiusShipContext))]
-    partial class GladiusShipContextModelSnapshot : ModelSnapshot
+    [Migration("20260326133408_Expertise")]
+    partial class Expertise
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -113,40 +116,6 @@ namespace GladiusShip.Infrastructure.Migrations
                     b.ToTable("InsuranceDetails");
                 });
 
-            modelBuilder.Entity("GladiusShip.Infrastructure.Entity.InsuranceDiscount", b =>
-                {
-                    b.Property<Guid>("Ref")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreateDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("FilePath")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("InsuranceRef")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("IsPassive")
-                        .HasColumnType("int");
-
-                    b.Property<Guid>("ShipRef")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("Value")
-                        .HasColumnType("int");
-
-                    b.HasKey("Ref");
-
-                    b.ToTable("InsuranceDiscount");
-                });
-
             modelBuilder.Entity("GladiusShip.Infrastructure.Entity.Log", b =>
                 {
                     b.Property<Guid>("Ref")
@@ -197,40 +166,6 @@ namespace GladiusShip.Infrastructure.Migrations
                     b.HasKey("Ref");
 
                     b.ToTable("Maintenance");
-                });
-
-            modelBuilder.Entity("GladiusShip.Infrastructure.Entity.MaintenanceCostDocument", b =>
-                {
-                    b.Property<Guid>("Ref")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreateDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("FilePath")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("IsPassive")
-                        .HasColumnType("int");
-
-                    b.Property<Guid>("MaintenanceRef")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("ShipRef")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("Value")
-                        .HasColumnType("int");
-
-                    b.HasKey("Ref");
-
-                    b.ToTable("MaintenanceCostDocument");
                 });
 
             modelBuilder.Entity("GladiusShip.Infrastructure.Entity.MaintenanceDetails", b =>

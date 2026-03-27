@@ -26,6 +26,13 @@ public class ShipController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("accessible-list")]
+    public async Task<IActionResult> GetAccessibleList(CancellationToken cancellationToken)
+    {
+        var result = await _shipService.GetAccessibleListAsync(GetCustomerRef(), cancellationToken);
+        return Ok(result);
+    }
+
     [HttpGet("{shipRef:guid}")]
     public async Task<IActionResult> GetDetail(Guid shipRef, CancellationToken cancellationToken)
     {
@@ -104,5 +111,42 @@ public class ShipController : ControllerBase
         var result = await _shipService.RemovePhotoAsync(photoRef, GetCustomerRef(), cancellationToken);
         if (!result.Success) return BadRequest(result);
         return Ok(result);
+    }
+
+    [HttpGet("{shipRef:guid}/permissions")]
+    public async Task<IActionResult> GetPermissions(Guid shipRef, CancellationToken cancellationToken)
+    {
+        var result = await _shipService.GetPermissionsAsync(shipRef, GetCustomerRef(), cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpPost("{shipRef:guid}/permission/grant")]
+    public async Task<IActionResult> GrantPermission(Guid shipRef, [FromBody] ShipPermissionRequest request, CancellationToken cancellationToken)
+    {
+        var result = await _shipService.GrantPermissionAsync(shipRef, GetCustomerRef(), request.PersonalRef, request.Permission, cancellationToken);
+        if (!result.Success) return BadRequest(result);
+        return Ok(result);
+    }
+
+    [HttpPost("{shipRef:guid}/permission/revoke")]
+    public async Task<IActionResult> RevokePermission(Guid shipRef, [FromBody] ShipPermissionRequest request, CancellationToken cancellationToken)
+    {
+        var result = await _shipService.RevokePermissionAsync(shipRef, GetCustomerRef(), request.PersonalRef, request.Permission, cancellationToken);
+        if (!result.Success) return BadRequest(result);
+        return Ok(result);
+    }
+
+    [HttpPut("permission/{permissionRef:guid}/update")]
+    public async Task<IActionResult> UpdatePermission(Guid permissionRef, [FromBody] string permission, CancellationToken cancellationToken)
+    {
+        var result = await _shipService.UpdatePermissionAsync(permissionRef, GetCustomerRef(), permission, cancellationToken);
+        if (!result.Success) return BadRequest(result);
+        return Ok(result);
+    }
+
+    public class ShipPermissionRequest
+    {
+        public Guid PersonalRef { get; set; }
+        public string Permission { get; set; } = null!;
     }
 }

@@ -13,4 +13,10 @@ public interface IShipService
     Task<ShipResultModel> UpdateRegistrationAsync(Guid shipRef, Guid customerRef, ShipRegistrationModel model, CancellationToken cancellationToken = default);
     Task<ShipResultModel> AddPhotoAsync(Guid shipRef, Guid customerRef, string photo, string serialNumber, CancellationToken cancellationToken = default);
     Task<ShipResultModel> RemovePhotoAsync(Guid photoRef, Guid customerRef, CancellationToken cancellationToken = default);
+
+    Task<ShipPermissionListResultModel> GetPermissionsAsync(Guid shipRef, Guid customerRef, CancellationToken cancellationToken = default);
+    Task<ShipResultModel> GrantPermissionAsync(Guid shipRef, Guid customerRef, Guid personalRef, string permission, CancellationToken cancellationToken = default);
+    Task<ShipResultModel> RevokePermissionAsync(Guid shipRef, Guid customerRef, Guid personalRef, string permission, CancellationToken cancellationToken = default);
+    Task<ShipResultModel> UpdatePermissionAsync(Guid permissionRef, Guid customerRef, string permission, CancellationToken cancellationToken = default);
+    Task<ShipListResultModel> GetAccessibleListAsync(Guid personalRef, CancellationToken cancellationToken = default);
 }

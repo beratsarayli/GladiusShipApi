@@ -86,6 +86,40 @@ public class UserService : IUserService
         return new UserSetActiveResultModel { Success = true, Message = "Kullanıcı eklendi." };
     }
 
+    public async Task<UserSetActiveResultModel> UpdateAsync(Guid userRef, Guid roleRef, string name, string surname, string phone, string mail, string description, CancellationToken cancellationToken = default)
+    {
+        var user = await _db.Users.FirstOrDefaultAsync(x => x.Ref == userRef, cancellationToken);
+        if (user == null)
+            return new UserSetActiveResultModel { Success = false, Message = "Kullanıcı bulunamadı." };
+
+        var mailExists = await _db.Users.AnyAsync(x => x.Mail == mail && x.Ref != userRef, cancellationToken);
+        if (mailExists)
+            return new UserSetActiveResultModel { Success = false, Message = "Bu mail adresi zaten kullanılıyor." };
+
+        user.RoleRef = roleRef;
+        user.Name = name;
+        user.Surname = surname;
+        user.Phone = phone;
+        user.Mail = mail;
+        user.Description = description;
+
+        await _db.SaveChangesAsync(cancellationToken);
+
+        return new UserSetActiveResultModel { Success = true, Message = "Kullanıcı güncellendi." };
+    }
+
+    public async Task<UserSetActiveResultModel> UpdatePasswordAsync(Guid userRef, string newPassword, CancellationToken cancellationToken = default)
+    {
+        var user = await _db.Users.FirstOrDefaultAsync(x => x.Ref == userRef, cancellationToken);
+        if (user == null)
+            return new UserSetActiveResultModel { Success = false, Message = "Kullanıcı bulunamadı." };
+
+        user.Password = BCryptNet.HashPassword(newPassword);
+        await _db.SaveChangesAsync(cancellationToken);
+
+        return new UserSetActiveResultModel { Success = true, Message = "Şifre güncellendi." };
+    }
+
     #endregion
 }
 

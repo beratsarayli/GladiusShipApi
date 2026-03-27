@@ -1,4 +1,5 @@
-﻿using GladiusShip.Infrastructure.Context;
+using GladiusShip.Core.Service.Storage;
+using GladiusShip.Infrastructure.Context;
 using GladiusShip.Infrastructure.Entity;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,10 +8,36 @@ namespace GladiusShip.Core.Service.Ship;
 public class ShipService : IShipService
 {
     private readonly GladiusShipContext _db;
+    private readonly IR2StorageService _storage;
 
-    public ShipService(GladiusShipContext db)
+    public ShipService(GladiusShipContext db, IR2StorageService storage)
     {
         _db = db;
+        _storage = storage;
+    }
+
+    private static (byte[] bytes, string ext, string contentType) DecodePhoto(string photo)
+    {
+        var base64 = photo;
+        var contentType = "image/jpeg";
+        if (photo.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+        {
+            var idx = photo.IndexOf(";base64,", StringComparison.OrdinalIgnoreCase);
+            if (idx > 0)
+            {
+                var mime = photo[5..idx].Trim().ToLowerInvariant();
+                contentType = mime;
+                base64 = photo[(idx + 8)..];
+            }
+        }
+        var ext = contentType switch
+        {
+            "image/png" => "png",
+            "image/gif" => "gif",
+            "image/webp" => "webp",
+            _ => "jpg"
+        };
+        return (Convert.FromBase64String(base64), ext, contentType);
     }
 
     public async Task<ShipListResultModel> GetListAsync(Guid customerRef, CancellationToken cancellationToken = default)
@@ -160,11 +187,16 @@ public class ShipService : IShipService
 
         foreach (var photo in model.Photos)
         {
+            var (bytes, ext, contentType) = DecodePhoto(photo.Photo);
+            var photoRef = Guid.NewGuid();
+            var key = $"ships/{shipRef}/{photoRef}.{ext}";
+            using var stream = new MemoryStream(bytes);
+            await _storage.PutObjectAsync(key, stream, contentType, cancellationToken);
             await _db.ShipPhoto.AddAsync(new ShipPhoto
             {
-                Ref = Guid.NewGuid(),
+                Ref = photoRef,
                 ShipRef = shipRef,
-                Photo = photo.Photo,
+                Photo = key,
                 SerialNumber = photo.SerialNumber
             }, cancellationToken);
         }
@@ -328,11 +360,16 @@ public class ShipService : IShipService
         if (!exists)
             return new ShipResultModel { Success = false, Message = "Gemi bulunamadı." };
 
+        var (bytes, ext, contentType) = DecodePhoto(photo);
+        var photoRef = Guid.NewGuid();
+        var key = $"ships/{shipRef}/{photoRef}.{ext}";
+        using var stream = new MemoryStream(bytes);
+        await _storage.PutObjectAsync(key, stream, contentType, cancellationToken);
         await _db.ShipPhoto.AddAsync(new ShipPhoto
         {
-            Ref = Guid.NewGuid(),
+            Ref = photoRef,
             ShipRef = shipRef,
-            Photo = photo,
+            Photo = key,
             SerialNumber = serialNumber
         }, cancellationToken);
 
@@ -355,15 +392,189 @@ public class ShipService : IShipService
         if (photoCount <= 4)
             return new ShipResultModel { Success = false, Message = "Gemide en az 4 fotoğraf bulunmalıdır." };
 
+        if (photo.Photo.StartsWith("ships/", StringComparison.OrdinalIgnoreCase))
+            await _storage.DeleteObjectAsync(photo.Photo, cancellationToken);
+
         _db.ShipPhoto.Remove(photo);
         await _db.SaveChangesAsync(cancellationToken);
 
         return new ShipResultModel { Success = true, Message = "Fotoğraf silindi." };
     }
+
+    public async Task<ShipPermissionListResultModel> GetPermissionsAsync(Guid shipRef, Guid customerRef, CancellationToken cancellationToken = default)
+    {
+        var canAccess = await HasAnyShipAccessAsync(shipRef, customerRef, cancellationToken);
+        if (!canAccess)
+            return new ShipPermissionListResultModel { Success = false, Message = "Gemi bulunamadı veya erişim yetkiniz yok." };
+
+        var items = await _db.ShipPermission
+            .AsNoTracking()
+            .Where(x => x.ShipRef == shipRef && x.IsPassive == 0)
+            .OrderByDescending(x => x.CreateDate)
+            .Select(x => new ShipPermissionItemModel
+            {
+                Ref = x.Ref,
+                ShipRef = x.ShipRef,
+                PersonalRef = x.PersonalRef,
+                Permission = x.Permission,
+                CreateDate = x.CreateDate,
+                IsPassive = x.IsPassive
+            })
+            .ToListAsync(cancellationToken);
+
+        return new ShipPermissionListResultModel { Success = true, Items = items };
+    }
+
+    public async Task<ShipResultModel> GrantPermissionAsync(Guid shipRef, Guid customerRef, Guid personalRef, string permission, CancellationToken cancellationToken = default)
+    {
+        var shipExists = await _db.Ship.AnyAsync(x => x.Ref == shipRef && x.CustomerRef == customerRef, cancellationToken);
+        if (!shipExists)
+            return new ShipResultModel { Success = false, Message = "Gemi bulunamadı." };
+
+        var existing = await _db.ShipPermission
+            .FirstOrDefaultAsync(x => x.ShipRef == shipRef && x.PersonalRef == personalRef && x.Permission == permission, cancellationToken);
+
+        if (existing != null)
+        {
+            existing.IsPassive = 0;
+            existing.CreateDate = DateTime.UtcNow;
+        }
+        else
+        {
+            await _db.ShipPermission.AddAsync(new ShipPermission
+            {
+                Ref = Guid.NewGuid(),
+                ShipRef = shipRef,
+                PersonalRef = personalRef,
+                Permission = permission,
+                CreateDate = DateTime.UtcNow,
+                IsPassive = 0
+            }, cancellationToken);
+        }
+
+        await _db.SaveChangesAsync(cancellationToken);
+
+        return new ShipResultModel { Success = true, Message = "Yetki verildi.", ShipRef = shipRef };
+    }
+
+    public async Task<ShipResultModel> RevokePermissionAsync(Guid shipRef, Guid customerRef, Guid personalRef, string permission, CancellationToken cancellationToken = default)
+    {
+        var shipExists = await _db.Ship.AnyAsync(x => x.Ref == shipRef && x.CustomerRef == customerRef, cancellationToken);
+        if (!shipExists)
+            return new ShipResultModel { Success = false, Message = "Gemi bulunamadı." };
+
+        var existing = await _db.ShipPermission
+            .FirstOrDefaultAsync(x => x.ShipRef == shipRef && x.PersonalRef == personalRef && x.Permission == permission, cancellationToken);
+
+        if (existing == null)
+            return new ShipResultModel { Success = false, Message = "Yetki kaydı bulunamadı." };
+
+        existing.IsPassive = 1;
+        await _db.SaveChangesAsync(cancellationToken);
+
+        return new ShipResultModel { Success = true, Message = "Yetki kaldırıldı.", ShipRef = shipRef };
+    }
+
+    public async Task<ShipResultModel> UpdatePermissionAsync(Guid permissionRef, Guid customerRef, string permission, CancellationToken cancellationToken = default)
+    {
+        var perm = await _db.ShipPermission.FirstOrDefaultAsync(x => x.Ref == permissionRef, cancellationToken);
+        if (perm == null)
+            return new ShipResultModel { Success = false, Message = "Yetki kaydı bulunamadı." };
+
+        var shipExists = await _db.Ship.AnyAsync(x => x.Ref == perm.ShipRef && x.CustomerRef == customerRef, cancellationToken);
+        if (!shipExists)
+            return new ShipResultModel { Success = false, Message = "Bu yetki size ait değil." };
+
+        perm.Permission = permission;
+        await _db.SaveChangesAsync(cancellationToken);
+
+        return new ShipResultModel { Success = true, Message = "Yetki güncellendi.", ShipRef = perm.ShipRef };
+    }
+    private static bool IsReadLikePermission(string? permission)
+    {
+        if (string.IsNullOrWhiteSpace(permission)) return false;
+        var p = permission.Trim().ToLowerInvariant();
+        return p == "read" || p == "write" || p == "full";
+    }
+
+    private static bool IsWriteLikePermission(string? permission)
+    {
+        if (string.IsNullOrWhiteSpace(permission)) return false;
+        var p = permission.Trim().ToLowerInvariant();
+        return p == "write" || p == "full";
+    }
+
+    private async Task<bool> HasAnyShipAccessAsync(Guid shipRef, Guid personalRef, CancellationToken ct)
+    {
+        var isOwner = await _db.Ship.AnyAsync(x => x.Ref == shipRef && x.CustomerRef == personalRef, ct);
+        if (isOwner) return true;
+
+        return await _db.ShipPermission.AnyAsync(x =>
+            x.ShipRef == shipRef &&
+            x.PersonalRef == personalRef &&
+            x.IsPassive == 0 &&
+            IsReadLikePermission(x.Permission), ct);
+    }
+
+    public async Task<ShipListResultModel> GetAccessibleListAsync(Guid personalRef, CancellationToken cancellationToken = default)
+    {
+        var ownerShipRefs = _db.Ship
+            .AsNoTracking()
+            .Where(x => x.CustomerRef == personalRef && x.IsPassive == 0)
+            .Select(x => x.Ref);
+
+        var permittedShipRefs = _db.ShipPermission
+            .AsNoTracking()
+            .Where(x => x.PersonalRef == personalRef && x.IsPassive == 0)
+            .Where(x => x.Permission == "read" || x.Permission == "write" || x.Permission == "full")
+            .Select(x => x.ShipRef);
+
+        var shipRefs = await ownerShipRefs
+            .Union(permittedShipRefs)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+        var ships = await _db.Ship
+            .AsNoTracking()
+            .Where(x => shipRefs.Contains(x.Ref) && x.IsPassive == 0)
+            .OrderBy(x => x.Name)
+            .Select(x => new ShipListItemModel
+            {
+                Ref = x.Ref,
+                CustomerRef = x.CustomerRef,
+                CompanyRef = x.CompanyRef,
+                Name = x.Name,
+                HullId = x.HullId,
+                ImoNumber = x.ImoNumber,
+                Flag = x.Flag,
+                RegistrationType = x.RegistrationType
+            })
+            .ToListAsync(cancellationToken);
+
+        return new ShipListResultModel { Success = true, Items = ships };
+    }
+
 }
 
 #region Models
 
+
+public class ShipPermissionListResultModel
+{
+    public bool Success { get; set; }
+    public string? Message { get; set; }
+    public List<ShipPermissionItemModel> Items { get; set; } = new();
+}
+
+public class ShipPermissionItemModel
+{
+    public Guid Ref { get; set; }
+    public Guid ShipRef { get; set; }
+    public Guid PersonalRef { get; set; }
+    public string Permission { get; set; } = null!;
+    public DateTime CreateDate { get; set; }
+    public int IsPassive { get; set; }
+}
 public class ShipListResultModel
 {
     public bool Success { get; set; }
